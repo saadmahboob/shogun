@@ -76,7 +76,7 @@ SGVector<float64_t> CBaggingMachine::apply_get_outputs(CFeatures* data)
 	SGMatrix<float64_t> output(data->get_num_vectors(), m_num_bags);
 	output.zero();
 
-	
+
 	#pragma omp parallel for
 	for (int32_t i = 0; i < m_num_bags; ++i)
 	{
@@ -131,13 +131,14 @@ bool CBaggingMachine::train_machine(CFeatures* data)
 	/*
 	  TODO: enable multi-threaded learning. This requires views support
 		on CFeatures*/
-	#pragma omp parallel for	
+	#pragma omp parallel for
 	for (int32_t i = 0; i < m_num_bags; ++i)
 	{
 		CMachine* c=dynamic_cast<CMachine*>(m_machine->clone());
 		ASSERT(c != NULL);
 		SGVector<index_t> idx(get_bag_size());
 		idx.random(0, m_features->get_num_vectors()-1);
+<<<<<<< b8d1543f26d70bbc8a4ed0e70ec2d867a2444f2e
 
 		CFeatures* features;
 		CLabels* labels;
@@ -178,7 +179,7 @@ bool CBaggingMachine::train_machine(CFeatures* data)
 		labels->remove_subset();
 
 		#pragma omp critical
-		{		
+		{
 		// get out of bag indexes
 		CDynamicArray<index_t>* oob = get_oob_indices(idx);
 		m_oob_indices->push_back(oob);
