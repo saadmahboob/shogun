@@ -70,6 +70,7 @@ public :
 	virtual SGMatrix<float64_t> dx_dx_dy_dy(index_t idx_a, index_t idx_b) const;
 	virtual SGMatrix<float64_t> dx_i_dx_j_dx_k_dot_vec(index_t idx_a, index_t idx_b, const SGVector<float64_t>& vec) const;
 	virtual SGMatrix<float64_t> dx_i_dx_j_dx_k_dx_k_dot_vec(index_t idx_a, index_t idx_b, const SGVector<float64_t>& vec) const;
+	virtual SGMatrix<float64_t> dx_i_dx_j_dx_k_dx_k_row_sum(index_t idx_a, index_t idx_b) const;
 
 	// nystrom parts
 	virtual float64_t difference_component(index_t idx_a, index_t idx_b, index_t i) const;

@@ -71,7 +71,7 @@ public :
 	virtual SGMatrix<float64_t> dx_i_dx_i_dx_j(index_t a, index_t idx_b) const=0;
 	virtual SGMatrix<float64_t> dx_i_dx_j(index_t a, index_t idx_b) const=0;
 	virtual SGMatrix<float64_t> dx_i_dx_j_dx_k_dot_vec(index_t idx_a, index_t idx_b, const SGVector<float64_t>& vec) const=0;
-	virtual SGMatrix<float64_t> dx_i_dx_j_dx_k_dx_k_dot_vec(index_t idx_a, index_t idx_b, const SGVector<float64_t>& vec) const=0;
+	virtual SGMatrix<float64_t> dx_i_dx_j_dx_k_dx_k_row_sum(index_t idx_a, index_t idx_b) const=0;
 
 	// old develop code
 	virtual SGMatrix<float64_t> dx_dx_dy_dy(index_t idx_a, index_t idx_b) const=0;

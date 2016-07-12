@@ -648,3 +648,31 @@ TEST(kernel_exp_family_impl_kernel_Gaussian, dx_i_dx_j_dx_k_dx_k_dot_vec)
 	for (auto i=0; i<D*D; i++)
 		EXPECT_NEAR(result[i], reference[i], 1e-8);
 }
+
+TEST(kernel_exp_family_impl_kernel_Gaussian, dx_i_dx_j_dx_k_dx_k_row_sum_equals_dot_with_ones)
+{
+	index_t N=2;
+	index_t D=3;
+	SGMatrix<float64_t> X(D,N);
+	for (auto i=0; i<N*D; i++)
+		X.matrix[i]=CMath::randn_float();
+
+	SGVector<float64_t> vec(D);
+	vec[0] = 1;
+	vec[1] = 1;
+	vec[2] = 1;
+
+	float64_t sigma = 2.0;
+	auto kernel = make_shared<Gaussian>(sigma);
+	kernel->set_lhs(X);
+	kernel->set_rhs(X);
+
+	SGMatrix<float64_t> result_ones = kernel->dx_i_dx_j_dx_k_dx_k_dot_vec(0,1,vec);
+	SGMatrix<float64_t> result = kernel->dx_i_dx_j_dx_k_dx_k_row_sum(0,1);
+	
+	ASSERT_EQ(result.num_rows, D);
+	ASSERT_EQ(result.num_cols, D);
+
+	for (auto i=0; i<D*D; i++)
+		EXPECT_NEAR(result_ones[i], result[i], 1e-8);
+}

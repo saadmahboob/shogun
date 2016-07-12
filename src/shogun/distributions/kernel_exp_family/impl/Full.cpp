@@ -205,7 +205,6 @@ SGMatrix<float64_t> Full::hessian(index_t idx_test) const
 
 	eigen_xi_hessian = MatrixXd::Zero(D, D);
 	eigen_beta_sum_hessian = MatrixXd::Zero(D, D);
-	eigen_ones = VectorXd::Ones(D);
 
 	// Entire alpha-beta vector
 	Map<VectorXd> eigen_alpha_beta(m_alpha_beta.vector, N*D+1);
@@ -217,7 +216,8 @@ SGMatrix<float64_t> Full::hessian(index_t idx_test) const
 	{
 		// Arguments are opposite order of Python code but sign flip is not
 		// needed since the function is symmetric
-		auto xi_hess_summ = m_kernel->dx_i_dx_j_dx_k_dx_k_dot_vec(a, idx_test, ones);
+		auto xi_hess_summ = m_kernel->dx_i_dx_j_dx_k_dx_k_row_sum(a, idx_test);
+
 		Map<MatrixXd> eigen_xi_hess_summ(xi_hess_summ.matrix, D, D);
 		eigen_xi_hessian += eigen_xi_hess_summ;
 

@@ -369,6 +369,32 @@ SGMatrix<float64_t> Gaussian::dx_i_dx_j_dx_k_dx_k_dot_vec(index_t idx_a, index_t
 	return result;
 }
 
+SGMatrix<float64_t> Gaussian::dx_i_dx_j_dx_k_dx_k_row_sum(index_t idx_a, index_t idx_b) const
+{
+	auto D = get_num_dimensions();
+
+	SGVector<float64_t> diff = difference(idx_a, idx_b);
+	Map<VectorXd> eigen_diff = Map<VectorXd>(diff.vector, D);
+
+	SGMatrix<float64_t> result(D, D);
+	Map<MatrixXd> eigen_result(result.matrix, D, D);
+
+	auto weighted_sq_distances = eigen_diff.array().pow(2).sum();
+	auto pairwise_distances = eigen_diff * eigen_diff.transpose();
+	auto k = kernel(idx_a, idx_b);
+
+	eigen_result = k * pow(2.0/m_sigma, 4) * pairwise_distances * weighted_sq_distances;
+	eigen_result -= k * pow(2.0/m_sigma, 3) * D * pairwise_distances;
+
+	eigen_result -= 2* k * (16.0/pow(m_sigma, 3)) * pairwise_distances;
+
+	eigen_result.diagonal().array() -= k * pow(2.0/m_sigma, 3) * weighted_sq_distances;
+	eigen_result.diagonal().array() += k * D * pow(2.0/m_sigma, 2);
+	eigen_result.diagonal().array() += k * 8.0/pow(m_sigma, 2);
+
+	return result;
+}
+
 
 float64_t Gaussian::difference_component(index_t idx_a, index_t idx_b, index_t i) const
 {
