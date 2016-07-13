@@ -138,7 +138,6 @@ bool CBaggingMachine::train_machine(CFeatures* data)
 		ASSERT(c != NULL);
 		SGVector<index_t> idx(get_bag_size());
 		idx.random(0, m_features->get_num_vectors()-1);
-<<<<<<< b8d1543f26d70bbc8a4ed0e70ec2d867a2444f2e
 
 		CFeatures* features;
 		CLabels* labels;
