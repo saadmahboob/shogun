@@ -211,18 +211,18 @@ SGMatrix<float64_t> Full::hessian(index_t idx_test) const
 	{
 		// Arguments are opposite order of Python code but sign flip is not
 		// needed since the function is symmetric
-		auto xi_hess_summ = m_kernel->dx_i_dx_j_dx_k_dx_k_row_sum(a, idx_test);
+		auto xi_hess_sum = m_kernel->dx_i_dx_j_dx_k_dx_k_row_sum(a, idx_test);
 
-		Map<MatrixXd> eigen_xi_hess_summ(xi_hess_summ.matrix, D, D);
-		eigen_xi_hessian += eigen_xi_hess_summ;
+		Map<MatrixXd> eigen_xi_hess_sum(xi_hess_sum.matrix, D, D);
+		eigen_xi_hessian += eigen_xi_hess_sum;
 
 		// Beta segment vector
 		SGVector<float64_t> beta_a(eigen_alpha_beta.segment(1+a*D, D).data(), D, false);
 
 		// Note sign flip because arguments are opposite order of Python code
-		auto beta_hess_summ = m_kernel->dx_i_dx_j_dx_k_dot_vec(a, idx_test, beta_a);
-		Map<MatrixXd> eigen_beta_hess_summ(beta_hess_summ.matrix, D, D);
-		eigen_beta_sum_hessian -= eigen_beta_hess_summ;
+		auto beta_hess_sum = m_kernel->dx_i_dx_j_dx_k_dot_vec(a, idx_test, beta_a);
+		Map<MatrixXd> eigen_beta_hess_sum(beta_hess_sum.matrix, D, D);
+		eigen_beta_sum_hessian -= eigen_beta_hess_sum;
 	}
 
 	eigen_xi_hessian.array() *= m_alpha_beta[0] / N;
