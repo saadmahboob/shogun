@@ -197,11 +197,9 @@ SGMatrix<float64_t> Full::hessian(index_t idx_test) const
 
 	SGMatrix<float64_t> xi_hessian(D, D);
 	SGMatrix<float64_t> beta_sum_hessian(D, D);
-	SGVector<float64_t> ones(D);
 
 	Map<MatrixXd> eigen_xi_hessian(xi_hessian.matrix, D, D);
 	Map<MatrixXd> eigen_beta_sum_hessian(beta_sum_hessian.matrix, D, D);
-	Map<VectorXd> eigen_ones(ones.vector, D);
 
 	eigen_xi_hessian = MatrixXd::Zero(D, D);
 	eigen_beta_sum_hessian = MatrixXd::Zero(D, D);
