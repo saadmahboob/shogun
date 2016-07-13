@@ -208,9 +208,6 @@ SGMatrix<float64_t> Full::hessian(index_t idx_test) const
 
 	// Entire alpha-beta vector
 	Map<VectorXd> eigen_alpha_beta(m_alpha_beta.vector, N*D+1);
-	// Beta segment vector
-	SGVector<float64_t> beta_a(D);
-	Map<VectorXd> eigen_beta_a(beta_a.vector, D);
 
 	for (auto a=0; a<N; a++)
 	{
@@ -221,9 +218,10 @@ SGMatrix<float64_t> Full::hessian(index_t idx_test) const
 		Map<MatrixXd> eigen_xi_hess_summ(xi_hess_summ.matrix, D, D);
 		eigen_xi_hessian += eigen_xi_hess_summ;
 
-		eigen_beta_a = eigen_alpha_beta.segment(1+a*D, D);
+		// Beta segment vector
+		SGVector<float64_t> beta_a(eigen_alpha_beta.segment(1+a*D, D).data(), D, false);
 
-		// Note sign flip becayse arguments are opposite order of Python code
+		// Note sign flip because arguments are opposite order of Python code
 		auto beta_hess_summ = m_kernel->dx_i_dx_j_dx_k_dot_vec(a, idx_test, beta_a);
 		Map<MatrixXd> eigen_beta_hess_summ(beta_hess_summ.matrix, D, D);
 		eigen_beta_sum_hessian -= eigen_beta_hess_summ;
