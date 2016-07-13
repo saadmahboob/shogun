@@ -527,6 +527,8 @@ SGVector<float64_t> Gaussian::dx_i_dx_j_component(index_t idx_a, index_t idx_b, 
 
 void Gaussian::precompute()
 {
+	// TODO: exploit symmetry in storage, respect memory order when reading
+
 	// remove potentially previously precomputed quantities to make calls below
 	// not use existing matrices
 	m_sq_difference_norms = SGMatrix<float64_t>();
