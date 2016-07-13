@@ -227,9 +227,8 @@ SGMatrix<float64_t> Full::hessian(index_t idx_test) const
 
 	eigen_xi_hessian.array() *= m_alpha_beta[0] / N;
 
-	SGMatrix<float64_t> result(D, D);
-	Map<MatrixXd> eigen_result(result.matrix, D, D);
-	eigen_result = eigen_xi_hessian + eigen_beta_sum_hessian;
+	// re-use memory rather than re-allocating a new result matrix
+	eigen_xi_hessian += eigen_beta_sum_hessian;
 
-	return result;
+	return xi_hessian;
 }
