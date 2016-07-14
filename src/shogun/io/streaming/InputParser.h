@@ -442,7 +442,8 @@ template <class T>
     }
 
     SG_SDEBUG("creating parse thread\n")
-    examples_ring->init_vector();
+    if (examples_ring)
+		examples_ring->init_vector();
     pthread_create(&parse_thread, NULL, parse_loop_entry_point, this);
 
     SG_SDEBUG("leaving CInputParser::start_parser()\n")
