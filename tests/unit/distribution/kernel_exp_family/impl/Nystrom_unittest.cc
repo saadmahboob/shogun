@@ -380,7 +380,7 @@ TEST(kernel_exp_family_impl_Nystrom, hessian_all_inds_equals_exact)
 
 TEST(kernel_exp_family_impl_Nystrom, hessian_almost_all_inds_execute)
 {
-	index_t N=15;
+	index_t N=5;
 	index_t D=3;
 	SGMatrix<float64_t> X(D,N);
 	for (auto i=0; i<N*D; i++)
