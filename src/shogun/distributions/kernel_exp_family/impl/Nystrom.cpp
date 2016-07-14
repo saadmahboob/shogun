@@ -344,7 +344,7 @@ SGMatrix<float64_t> Nystrom::hessian(index_t idx_test) const
 		Map<MatrixXd> eigen_xi_hess_sum(xi_hess_sum.matrix, D, D);
 		eigen_xi_hessian += eigen_xi_hess_sum;
 
-		SGVector<float64_t> beta_a(beta_full_fake.segment(1+a*D, D).data(), D, false);
+		SGVector<float64_t> beta_a(beta_full_fake.segment(a*D, D).data(), D, false);
 
 		// Note sign flip because arguments are opposite order of Python code
 		auto beta_hess_sum = m_kernel->dx_i_dx_j_dx_k_dot_vec(a, idx_test, beta_a);
