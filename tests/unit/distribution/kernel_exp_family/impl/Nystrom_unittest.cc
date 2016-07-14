@@ -351,3 +351,56 @@ TEST(kernel_exp_family_impl_Nystrom, log_pdf_all_inds_equals_exact)
 	EXPECT_NEAR(log_pdf, log_pdf_nystrom, 1e-8);
 }
 
+TEST(kernel_exp_family_impl_Nystrom, hessian_all_inds_equals_exact)
+{
+	index_t N=5;
+	index_t D=3;
+	SGMatrix<float64_t> X(D,N);
+	for (auto i=0; i<N*D; i++)
+		X.matrix[i]=CMath::randn_float();
+		
+	float64_t sigma = 2;
+	float64_t lambda = 1;
+	auto m=N*D;
+	Nystrom est_nystrom(X, new kernel::Gaussian(sigma), lambda, m);
+	Full est(X, new kernel::Gaussian(sigma), lambda);
+	est_nystrom.fit();
+	est.fit();
+	
+	SGVector<float64_t> x(D);
+	for (auto i=0; i<D; i++)
+		x[i]=CMath::randn_float();
+
+	auto hessian = est.hessian(x);
+	auto hessian_nystrom = est_nystrom.hessian(x);
+	
+	for (auto i=0; i<D*D; i++)
+		EXPECT_NEAR(hessian.matrix[i], hessian_nystrom.matrix[i], 1e-8);
+}
+
+TEST(kernel_exp_family_impl_Nystrom, hessian_almost_all_inds_almost_equals_exact)
+{
+	index_t N=5;
+	index_t D=3;
+	SGMatrix<float64_t> X(D,N);
+	for (auto i=0; i<N*D; i++)
+		X.matrix[i]=CMath::randn_float();
+		
+	float64_t sigma = 2;
+	float64_t lambda = 1;
+	auto m=N*D*1;
+	Nystrom est_nystrom(X, new kernel::Gaussian(sigma), lambda, m);
+	Full est(X, new kernel::Gaussian(sigma), lambda);
+	est_nystrom.fit();
+	est.fit();
+	
+	SGVector<float64_t> x(D);
+	for (auto i=0; i<D; i++)
+		x[i]=CMath::randn_float();
+
+	auto hessian = est.hessian(x);
+	//auto hessian_nystrom = est_nystrom.hessian(x);
+	
+	//for (auto i=0; i<D*D; i++)
+	//	EXPECT_NEAR(hessian.matrix[i], hessian_nystrom.matrix[i], 1e-3);
+}

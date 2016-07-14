@@ -269,14 +269,6 @@ SGVector<float64_t> Nystrom::grad(index_t idx_test) const
 	return xi_grad;
 }
 
-SGMatrix<float64_t> Nystrom::hessian(index_t idx_test) const
-{
-	REQUIRE(false, "The hessian is not implemented for the Nystrom approximation\n");
-	auto D = get_num_dimensions();
-
-	return SGMatrix<float64_t>(D, D);
-}
-
 SGMatrix<float64_t> Nystrom::pinv_self_adjoint(const SGMatrix<float64_t>& A)
 {
 	// based on the snippet from
@@ -309,4 +301,61 @@ SGMatrix<float64_t> Nystrom::pinv_self_adjoint(const SGMatrix<float64_t>& A)
 	eigen_pinv = (V*inv_s.asDiagonal()*V.transpose());
 
 	return A_pinv;
+}
+
+SGMatrix<float64_t> Nystrom::hessian(index_t idx_test) const
+{
+	auto N = get_num_lhs();
+	auto D = get_num_dimensions();
+	auto m = get_num_rkhs_basis();
+
+	SGMatrix<float64_t> xi_hessian(D, D);
+	SGMatrix<float64_t> beta_sum_hessian(D, D);
+
+	Map<MatrixXd> eigen_xi_hessian(xi_hessian.matrix, D, D);
+	Map<MatrixXd> eigen_beta_sum_hessian(beta_sum_hessian.matrix, D, D);
+
+	eigen_xi_hessian = MatrixXd::Zero(D, D);
+	eigen_beta_sum_hessian = MatrixXd::Zero(D, D);
+
+	Map<VectorXd> eigen_alpha_beta(m_alpha_beta.vector, m+1);
+
+	// creates a sparse version of the alpha beta vector that has same
+	// dimension as in full version
+	// TODO can be improved
+	VectorXd beta_full_fake=VectorXd::Zero(N*D);
+	for (auto ind_idx=0; ind_idx<m; ind_idx++)
+	{
+		auto ai = idx_to_ai(m_rkhs_basis_inds[ind_idx]);
+		auto a = ai.first;
+		auto i = ai.second;
+		beta_full_fake[a*D+i] = m_alpha_beta[1+ind_idx];
+	}
+
+	// TODO currently iterates over all data points
+	// This should be fine as every data is likely to be in the Nystrom basis
+	// However can be done better via only touching the data in the Nystrom basis
+	// and for every data check which are the corresponding dimensions that contribute
+	// happens implicit here as some parts of the beta vector are zero
+	for (auto a=0; a<N; a++)
+	{
+		auto xi_hess_sum = m_kernel->dx_i_dx_j_dx_k_dx_k_row_sum(a, idx_test);
+
+		Map<MatrixXd> eigen_xi_hess_sum(xi_hess_sum.matrix, D, D);
+		eigen_xi_hessian += eigen_xi_hess_sum;
+
+		SGVector<float64_t> beta_a(beta_full_fake.segment(1+a*D, D).data(), D, false);
+
+		// Note sign flip because arguments are opposite order of Python code
+		auto beta_hess_sum = m_kernel->dx_i_dx_j_dx_k_dot_vec(a, idx_test, beta_a);
+		Map<MatrixXd> eigen_beta_hess_sum(beta_hess_sum.matrix, D, D);
+		eigen_beta_sum_hessian -= eigen_beta_hess_sum;
+	}
+
+	eigen_xi_hessian.array() *= m_alpha_beta[0] / N;
+
+	// re-use memory rather than re-allocating a new result matrix
+	eigen_xi_hessian += eigen_beta_sum_hessian;
+
+	return xi_hessian;
 }

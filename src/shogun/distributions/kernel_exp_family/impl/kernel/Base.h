@@ -85,6 +85,9 @@ public :
 	virtual float64_t dx_dx_component(index_t idx_a, index_t idx_b, index_t i) const=0;
 	virtual SGVector<float64_t> dx_i_dx_i_dx_j_component(index_t idx_a, index_t idx_b, index_t i) const=0;
 	virtual SGVector<float64_t> dx_i_dx_j_component(index_t idx_a, index_t idx_b, index_t i) const=0;
+	virtual float64_t dx_i_dx_j_dx_k_dot_vec_component(index_t idx_a, index_t idx_b, const SGVector<float64_t>& vec, index_t i, index_t j) const=0;
+	virtual float64_t dx_i_dx_j_dx_k_dx_k_row_sum_component(index_t idx_a, index_t idx_b, index_t i, index_t j) const=0;
+
 
 	virtual void precompute() {};
 

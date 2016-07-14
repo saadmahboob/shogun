@@ -676,3 +676,70 @@ TEST(kernel_exp_family_impl_kernel_Gaussian, dx_i_dx_j_dx_k_dx_k_row_sum_equals_
 	for (auto i=0; i<D*D; i++)
 		EXPECT_NEAR(result_ones[i], result[i], 1e-8);
 }
+
+TEST(kernel_exp_family_impl_kernel_Gaussian, dx_i_dx_j_dx_k_dx_k_row_sum_component)
+{
+	index_t N=5;
+	index_t D=3;
+	SGMatrix<float64_t> X(D,N);
+	for (auto i=0; i<N*D; i++)
+		X.matrix[i]=CMath::randn_float();
+		
+	float64_t sigma = 2;
+
+	auto kernel = make_shared<Gaussian>(sigma);
+	kernel->set_lhs(X);
+	kernel->set_rhs(X);
+	
+	for (auto idx_a=0; idx_a<N; idx_a++)
+	{
+	    for (auto idx_b=0; idx_b<N; idx_b++)
+	    {
+	        // compare against full version
+	        auto result = kernel->dx_i_dx_j_dx_k_dx_k_row_sum(idx_a, idx_b);
+	
+	        for (auto i=0; i<D; i++)
+		        for (auto j=0; j<D; j++)
+		        {
+			        auto entry = kernel->dx_i_dx_j_dx_k_dx_k_row_sum_component(idx_a, idx_b, i, j);
+			        EXPECT_NEAR(result(i,j), entry, 1e-8);
+		        }
+		}
+	}
+}
+
+TEST(kernel_exp_family_impl_kernel_Gaussian, dx_i_dx_j_dx_k_dot_vec_component)
+{
+	index_t N=5;
+	index_t D=3;
+	SGMatrix<float64_t> X(D,N);
+	for (auto i=0; i<N*D; i++)
+		X.matrix[i]=CMath::randn_float();
+		
+	float64_t sigma = 2;
+
+	auto kernel = make_shared<Gaussian>(sigma);
+	kernel->set_lhs(X);
+	kernel->set_rhs(X);
+	
+	for (auto idx_a=0; idx_a<N; idx_a++)
+	{
+	    for (auto idx_b=0; idx_b<N; idx_b++)
+	    {
+	        // compare against full version
+	        SGVector<float64_t> vec(D);
+	        for (auto i=0; i<D; i++)
+	            vec[i]=CMath::randn_float();
+	            
+	        auto result = kernel->dx_i_dx_j_dx_k_dot_vec(idx_a, idx_b, vec);
+	
+	        for (auto i=0; i<D; i++)
+		        for (auto j=0; j<D; j++)
+		        {
+			        auto entry = kernel->dx_i_dx_j_dx_k_dot_vec_component(idx_a, idx_b, vec, i, j);
+			        EXPECT_NEAR(result(i,j), entry, 1e-8);
+		        }
+		}
+	}
+}
+
