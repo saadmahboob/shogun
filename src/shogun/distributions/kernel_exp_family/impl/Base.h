@@ -67,6 +67,7 @@ public :
 
 	SGVector<float64_t> grad(SGVector<float64_t> x);
 	SGMatrix<float64_t> hessian(SGVector<float64_t> x);
+	SGVector<float64_t> hessian_diag(SGVector<float64_t> x);
 
 	SGVector<float64_t> get_alpha_beta() const { return m_alpha_beta; }
 
@@ -78,6 +79,7 @@ public :
 	virtual float64_t log_pdf(index_t idx_test) const=0;
 	virtual SGVector<float64_t> grad(index_t idx_test) const=0;
 	virtual SGMatrix<float64_t> hessian(index_t idx_test) const=0;
+	virtual SGVector<float64_t> hessian_diag(index_t idx_test) const=0;
 
 protected:
 	virtual void solve_and_store(const SGMatrix<float64_t>& A, const SGVector<float64_t>& b);

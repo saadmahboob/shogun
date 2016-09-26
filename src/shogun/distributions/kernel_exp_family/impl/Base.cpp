@@ -135,3 +135,8 @@ SGMatrix<float64_t> Base::hessian(SGVector<float64_t> x)
 	return ((const Base*)this)->hessian(0);
 }
 
+SGVector<float64_t> Base::hessian_diag(SGVector<float64_t> x)
+{
+	set_test_data(x);
+	return ((const Base*)this)->hessian_diag(0);
+}

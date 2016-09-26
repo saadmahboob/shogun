@@ -359,3 +359,49 @@ SGMatrix<float64_t> Nystrom::hessian(index_t idx_test) const
 
 	return xi_hessian;
 }
+
+SGVector<float64_t> Nystrom::hessian_diag(index_t idx_test) const
+{
+	// Note: code modifed from full hessian case
+	auto N = get_num_lhs();
+	auto D = get_num_dimensions();
+	auto m = get_num_rkhs_basis();
+
+	SGVector<float64_t> xi_hessian_diag(D);
+	SGVector<float64_t> beta_sum_hessian_diag(D);
+
+	Map<VectorXd> eigen_xi_hessian_diag(xi_hessian_diag.vector, D);
+	Map<VectorXd> eigen_beta_sum_hessian_diag(beta_sum_hessian_diag.vector, D);
+
+	eigen_xi_hessian_diag = VectorXd::Zero(D);
+	eigen_beta_sum_hessian_diag = VectorXd::Zero(D);
+
+	Map<VectorXd> eigen_alpha_beta(m_alpha_beta.vector, m+1);
+
+	// TODO can be improved (see full hessian case)
+	VectorXd beta_full_fake=VectorXd::Zero(N*D);
+	for (auto ind_idx=0; ind_idx<m; ind_idx++)
+	{
+		auto ai = idx_to_ai(m_rkhs_basis_inds[ind_idx]);
+		auto a = ai.first;
+		auto i = ai.second;
+		beta_full_fake[a*D+i] = m_alpha_beta[1+ind_idx];
+	}
+
+	// TODO currently iterates over all data points (see full hessian case)
+	SGVector<float64_t> xi_hess_sum_diag = SGVector<float64_t>(D);
+	for (auto a=0; a<N; a++)
+	{
+		SGVector<float64_t> beta_a(beta_full_fake.segment(a*D, D).data(), D, false);
+		for (auto i=0; i<D; i++)
+		{
+			eigen_xi_hessian_diag[i] += m_kernel->dx_i_dx_j_dx_k_dx_k_row_sum_component(a, idx_test, i, i);
+			eigen_beta_sum_hessian_diag[i] -= m_kernel->dx_i_dx_j_dx_k_dot_vec_component(a, idx_test, beta_a, i, i);
+		}
+	}
+
+	eigen_xi_hessian_diag.array() *= m_alpha_beta[0] / N;
+	eigen_xi_hessian_diag += eigen_beta_sum_hessian_diag;
+
+	return xi_hessian_diag;
+}

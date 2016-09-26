@@ -401,3 +401,28 @@ TEST(kernel_exp_family_impl_Nystrom, hessian_almost_all_inds_execute)
 	auto hessian = est.hessian(x);
 	auto hessian_nystrom = est_nystrom.hessian(x);
 }
+
+TEST(kernel_exp_family_impl_Nystrom, hessian_diag_equals_hessian)
+{
+	index_t N=5;
+	index_t D=3;
+	SGMatrix<float64_t> X(D,N);
+	for (auto i=0; i<N*D; i++)
+		X.matrix[i]=CMath::randn_float();
+
+	float64_t sigma = 2;
+	float64_t lambda = 2;
+	auto m=N*D*.6;
+	auto kernel = new kernel::Gaussian(sigma);
+	Nystrom est(X, kernel, lambda, m);
+	est.fit();
+	
+	SGVector<float64_t> x(D);
+	x[0] = CMath::randn_float();
+	x[1] = CMath::randn_float();
+	auto hessian = est.hessian(x);
+	auto hessian_diag = est.hessian_diag(x);
+	
+	for (auto i=0; i<D; i++)
+		EXPECT_NEAR(hessian_diag[i], hessian(i,i), 1e-8);
+}
