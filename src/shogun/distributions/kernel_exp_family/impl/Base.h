@@ -62,6 +62,8 @@ public :
 
 	void fit();
 
+	float64_t objective();
+
 	float64_t log_pdf(SGVector<float64_t> x);
 	SGVector<float64_t> log_pdf(SGMatrix<float64_t> X);
 

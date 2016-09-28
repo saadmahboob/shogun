@@ -93,6 +93,31 @@ void Base::fit()
 	solve_and_store(A_b.first, A_b.second);
 }
 
+float64_t Base::objective()
+{
+	// TODO unit test is broken as Python implementation differs for Hessian diagonal
+	auto N = get_num_rhs();
+	auto D = get_num_dimensions();
+
+	float64_t objective = 0.0;
+
+#pragma omp parallel for reduction (+:objective)
+	for (auto i=0; i<N; ++i)
+	{
+		auto gradient = ((const Base*)this)->grad(i);
+//		gradient.display_vector("gradient");
+		auto eigen_gradient = Map<VectorXd>(gradient.vector, D);
+		objective += 0.5 * eigen_gradient.squaredNorm();
+
+		auto hessian_diag = ((const Base*)this)->hessian_diag(i);
+//		hessian_diag.display_vector("hessian_diag");
+		auto eigen_hessian_diag = Map<VectorXd>(hessian_diag.vector, D);
+		objective += eigen_hessian_diag.squaredNorm();
+	}
+
+	return objective / N;
+}
+
 void Base::solve_and_store(const SGMatrix<float64_t>& A, const SGVector<float64_t>& b)
 {
 	auto eigen_A = Map<MatrixXd>(A.matrix, A.num_rows, A.num_cols);

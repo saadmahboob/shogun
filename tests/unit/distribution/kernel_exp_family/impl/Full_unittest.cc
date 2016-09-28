@@ -277,6 +277,37 @@ TEST(kernel_exp_family_impl_Full, hessian_kernel_Gaussian)
 		EXPECT_NEAR(hessian[i], reference2[i], 1e-8);
 }
 
+TEST(kernel_exp_family_impl_Full, hessian_diag_kernel_Gaussian)
+{
+	index_t N=3;
+	index_t D=2;
+	SGMatrix<float64_t> X(D,N);
+	X(0,0)=0;
+	X(1,0)=1;
+	X(0,1)=2;
+	X(1,1)=4;
+	X(0,2)=3;
+	X(1,2)=6;
+
+	float64_t sigma = 2;
+	float64_t lambda = 1;
+	auto kernel = new kernel::Gaussian(sigma);
+	Full est(X, kernel, lambda);
+	est.fit();
+	
+	SGVector<float64_t> x(D);
+	x[0] = 0;
+	x[1] = 1;
+	auto hessian_diag = est.hessian_diag(x);
+	
+	// from kernel_exp_family Python implementation
+	float64_t reference[] = {-1.34262346, -1.3600992 };
+	
+	for (auto i=0; i<D; i++)
+		// TODO why is this only 1e-4? Check python code for that!
+		EXPECT_NEAR(hessian_diag[i], reference[i], 1e-4);
+}
+
 TEST(kernel_exp_family_impl_Full, hessian_diag_equals_hessian)
 {
 	index_t N=5;
@@ -286,7 +317,7 @@ TEST(kernel_exp_family_impl_Full, hessian_diag_equals_hessian)
 		X.matrix[i]=CMath::randn_float();
 
 	float64_t sigma = 2;
-	float64_t lambda = 2;
+	float64_t lambda = 1;
 	auto kernel = new kernel::Gaussian(sigma);
 	Full est(X, kernel, lambda);
 	est.fit();
@@ -299,4 +330,36 @@ TEST(kernel_exp_family_impl_Full, hessian_diag_equals_hessian)
 	
 	for (auto i=0; i<D; i++)
 		EXPECT_NEAR(hessian_diag[i], hessian(i,i), 1e-8);
+}
+
+TEST(kernel_exp_family_impl_Full, objective_kernel_Gaussian)
+{
+	index_t N=3;
+	index_t D=2;
+	SGMatrix<float64_t> X(D,N);
+	X(0,0)=0;
+	X(1,0)=1;
+	X(0,1)=2;
+	X(1,1)=4;
+	X(0,2)=3;
+	X(1,2)=6;
+		
+	float64_t sigma = 2;
+	float64_t lambda = 1;
+	auto kernel = new kernel::Gaussian(sigma);
+	Full est(X, kernel, lambda);
+	est.fit();
+	
+	// from kernel_exp_family Python implementation
+	// on training data
+	// TODO why is this only 1e-2? Check python code for that!
+	EXPECT_NEAR(est.objective(), 3.29986562401, 1e-2);
+	
+	// on test data
+	SGVector<float64_t> x(D);
+	x[0] = 0;
+	x[1] = 1;
+	est.set_test_data(x);
+	// TODO why is this only 1e-2? Check python code for that!
+	EXPECT_NEAR(est.objective(), 3.6527115274, 1e-2);
 }
