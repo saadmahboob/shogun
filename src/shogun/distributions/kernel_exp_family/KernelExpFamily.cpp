@@ -47,7 +47,7 @@ CKernelExpFamily::CKernelExpFamily() : CSGObject()
 CKernelExpFamily::CKernelExpFamily(SGMatrix<float64_t> data,
 			float64_t sigma, float64_t lambda, float memory_limit_gib) : CSGObject()
 {
-	REQUIRE(data.matrix, "Given observations cannot be empty\n");
+	REQUIRE(data.matrix, "Given observations cannot be empty.\n");
 	REQUIRE(data.num_rows>0, "Dimension of given observations (%d) must be positive.\n", data.num_rows);
 	REQUIRE(data.num_cols>0, "Number of given observations (%d) must be positive.\n", data.num_cols);
 	REQUIRE(sigma>0, "Given sigma (%f) must be positive.\n", sigma);
@@ -85,8 +85,8 @@ void CKernelExpFamily::fit()
 float64_t CKernelExpFamily::log_pdf(SGVector<float64_t> x)
 {
 	auto D = m_impl->get_num_dimensions();
-	REQUIRE(x.vector, "Given data point cannot be empty\n");
-	REQUIRE(x.vlen==D, "Dimension of given data point (%d) must match the estimator's (%d)\n", x.vlen, D);
+	REQUIRE(x.vector, "Given data point cannot be empty.\n");
+	REQUIRE(x.vlen==D, "Dimension of given data point (%d) must match the estimator's (%d).\n", x.vlen, D);
 
 	return m_impl->log_pdf(x);
 }
@@ -94,8 +94,8 @@ float64_t CKernelExpFamily::log_pdf(SGVector<float64_t> x)
 SGVector<float64_t> CKernelExpFamily::grad(SGVector<float64_t> x)
 {
 	auto D = m_impl->get_num_dimensions();
-	REQUIRE(x.vector, "Given data point cannot be empty\n");
-	REQUIRE(x.vlen==D, "Dimension of given data point (%d) must match the estimator's (%d)\n", x.vlen, D);
+	REQUIRE(x.vector, "Given data point cannot be empty.\n");
+	REQUIRE(x.vlen==D, "Dimension of given data point (%d) must match the estimator's (%d).\n", x.vlen, D);
 
 	return m_impl->grad(x);
 }
@@ -112,8 +112,8 @@ SGMatrix<float64_t> CKernelExpFamily::hessian(SGVector<float64_t> x)
 SGVector<float64_t> CKernelExpFamily::log_pdf_multiple(SGMatrix<float64_t> X)
 {
 	auto D = m_impl->get_num_dimensions();
-	REQUIRE(X.matrix, "Given observations cannot be empty\n");
-	REQUIRE(X.num_rows==D, "Dimension of given observations (%d) must match the estimator's (%d)\n", X.num_rows, D);
+	REQUIRE(X.matrix, "Given observations cannot be empty.\n");
+	REQUIRE(X.num_rows==D, "Dimension of given observations (%d) must match the estimator's (%d).\n", X.num_rows, D);
 	REQUIRE(X.num_cols>0, "Number of given observations (%d) must be positive.\n", X.num_cols);
 
 	return m_impl->log_pdf(X);
@@ -128,7 +128,7 @@ float64_t CKernelExpFamily::objective(SGMatrix<float64_t> X)
 {
 	auto D = m_impl->get_num_dimensions();
 	REQUIRE(X.matrix, "Given observations cannot be empty\n");
-	REQUIRE(X.num_rows==D, "Dimension of given observations (%d) must match the estimator's (%d)\n", X.num_rows, D);
+	REQUIRE(X.num_rows==D, "Dimension of given observations (%d) must match the estimator's (%d).\n", X.num_rows, D);
 	REQUIRE(X.num_cols>0, "Number of given observations (%d) must be positive.\n", X.num_cols);
 
 	return m_impl->objective(X);
