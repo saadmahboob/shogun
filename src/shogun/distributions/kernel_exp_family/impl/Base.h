@@ -85,12 +85,19 @@ public :
 	virtual SGVector<float64_t> hessian_diag(index_t idx_test) const=0;
 
 protected:
+	/** @return Vector wrapped around the specified training point,
+	 *  no reference counting */
+	const SGVector<float64_t> get_training_point(index_t i) const;
+
 	virtual void solve_and_store(const SGMatrix<float64_t>& A, const SGVector<float64_t>& b);
 
 	kernel::Base* m_kernel;
 	float64_t m_lambda;
 
 	SGVector<float64_t> m_alpha_beta;
+
+	// training data
+	SGMatrix<float64_t> m_data;
 };
 };
 

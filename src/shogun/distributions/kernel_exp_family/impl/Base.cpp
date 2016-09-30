@@ -43,12 +43,12 @@ using namespace Eigen;
 
 index_t Base::get_num_dimensions() const
 {
-	return m_kernel->get_num_dimensions();
+	return m_data.num_rows;
 }
 
 index_t Base::get_num_lhs() const
 {
-	return m_kernel->get_num_lhs();
+	return m_data.num_cols;
 }
 
 void Base::set_test_data(SGMatrix<float64_t> X)
@@ -67,9 +67,15 @@ index_t Base::get_num_rhs() const
 	return m_kernel->get_num_rhs();
 }
 
+const SGVector<float64_t> Base::get_training_point(index_t i) const
+{
+	return SGVector<float64_t>(m_data.get_column_vector(i), get_num_dimensions(), false);
+}
+
 Base::Base(SGMatrix<float64_t> data,
 		kernel::Base* kernel, float64_t lambda)
 {
+	m_data = data;
 	m_kernel = kernel;
 	m_kernel->set_lhs(data);
 	m_kernel->set_rhs(data);
