@@ -110,7 +110,7 @@ float64_t Base::objective() const
 
 		auto hessian_diag = ((const Base*)this)->hessian_diag(i);
 		auto eigen_hessian_diag = Map<VectorXd>(hessian_diag.vector, D);
-		objective += eigen_hessian_diag.squaredNorm();
+		objective += eigen_hessian_diag.sum();
 	}
 
 	return objective / N;
