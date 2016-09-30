@@ -43,16 +43,17 @@ using namespace Eigen;
 
 index_t Base::get_num_dimensions() const
 {
-	return m_data.num_rows;
+	return m_lhs.num_rows;
 }
 
 index_t Base::get_num_lhs() const
 {
-	return m_data.num_cols;
+	return m_lhs.num_cols;
 }
 
 void Base::set_test_data(SGMatrix<float64_t> X)
 {
+	m_rhs = X;
 	m_kernel->set_rhs(X);
 	m_kernel->precompute();
 }
@@ -64,18 +65,24 @@ void Base::set_test_data(SGVector<float64_t> x)
 
 index_t Base::get_num_rhs() const
 {
-	return m_kernel->get_num_rhs();
+	return m_rhs.num_cols;
 }
 
-const SGVector<float64_t> Base::get_training_point(index_t i) const
+const SGVector<float64_t> Base::get_lhs_point(index_t i) const
 {
-	return SGVector<float64_t>(m_data.get_column_vector(i), get_num_dimensions(), false);
+	return SGVector<float64_t>(m_lhs.get_column_vector(i), get_num_dimensions(), false);
+}
+
+const SGVector<float64_t> Base::get_rhs_point(index_t i) const
+{
+	return SGVector<float64_t>(m_rhs.get_column_vector(i), get_num_dimensions(), false);
 }
 
 Base::Base(SGMatrix<float64_t> data,
 		kernel::Base* kernel, float64_t lambda)
 {
-	m_data = data;
+	m_lhs = data;
+	m_rhs = data;
 	m_kernel = kernel;
 	m_kernel->set_lhs(data);
 	m_kernel->set_rhs(data);
