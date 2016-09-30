@@ -353,7 +353,7 @@ TEST(kernel_exp_family_impl_Full, objective_kernel_Gaussian)
 	// from kernel_exp_family Python implementation
 	// on training data
 	// TODO why is this only 1e-2? Check python code for that!
-	EXPECT_NEAR(est.objective(), 3.29986562401, 1e-2);
+	EXPECT_NEAR(est.objective(), -2.56402312081, 1e-2);
 	
 	// on test data
 	SGVector<float64_t> x(D);
@@ -361,5 +361,5 @@ TEST(kernel_exp_family_impl_Full, objective_kernel_Gaussian)
 	x[1] = 1;
 	est.set_test_data(x);
 	// TODO why is this only 1e-2? Check python code for that!
-	EXPECT_NEAR(est.objective(), 3.6527115274, 1e-2);
+	EXPECT_NEAR(est.objective(), -2.70251871779, 1e-2);
 }
