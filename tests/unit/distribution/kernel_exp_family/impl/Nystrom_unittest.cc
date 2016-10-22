@@ -154,8 +154,10 @@ TEST(kernel_exp_family_impl_Nystrom, log_pdf_almost_all_inds_close_exact)
 	for (auto i=0; i<D; i++)
 		x[i]=CMath::randn_float();
 
-	auto log_pdf = est.log_pdf(x);
-	auto log_pdf_nystrom = est_nystrom.log_pdf(x);
+	est.set_test_data(x);
+	est_nystrom.set_test_data(x);
+	auto log_pdf = est.log_pdf(0);
+	auto log_pdf_nystrom = est_nystrom.log_pdf(0);
 	
 	EXPECT_NEAR(log_pdf, log_pdf_nystrom, 0.3);
 }
@@ -180,8 +182,10 @@ TEST(kernel_exp_family_impl_Nystrom, grad_all_inds_equals_exact)
 	for (auto i=0; i<D; i++)
 		x[i]=CMath::randn_float();
 
-	auto grad = est.grad(x);
-	auto grad_nystrom = est_nystrom.grad(x);
+	est.set_test_data(x);
+	est_nystrom.set_test_data(x);
+	auto grad = est.grad(0);
+	auto grad_nystrom = est_nystrom.grad(0);
 	
 	for (auto i=0; i<D; i++)
 		EXPECT_NEAR(grad[i], grad_nystrom[i], 1e-8);
@@ -207,8 +211,10 @@ TEST(kernel_exp_family_impl_Nystrom, grad_almost_all_inds_close_exact)
 	for (auto i=0; i<D; i++)
 		x[i]=CMath::randn_float();
 
-	auto grad = est.grad(x);
-	auto grad_nystrom = est_nystrom.grad(x);
+	est.set_test_data(x);
+	est_nystrom.set_test_data(x);
+	auto grad = est.grad(0);
+	auto grad_nystrom = est_nystrom.grad(0);
 	
 	for (auto i=0; i<D; i++)
 		EXPECT_NEAR(grad[i], grad_nystrom[i], 0.3);
@@ -344,9 +350,11 @@ TEST(kernel_exp_family_impl_Nystrom, log_pdf_all_inds_equals_exact)
 	SGVector<float64_t> x(D);
 	for (auto i=0; i<D; i++)
 		x[i]=CMath::randn_float();
-		
-	auto log_pdf = est.log_pdf(x);
-	auto log_pdf_nystrom = est_nystrom.log_pdf(x);
+	
+	est.set_test_data(x);
+	est_nystrom.set_test_data(x);
+	auto log_pdf = est.log_pdf(0);
+	auto log_pdf_nystrom = est_nystrom.log_pdf(0);
 	
 	EXPECT_NEAR(log_pdf, log_pdf_nystrom, 1e-8);
 }
@@ -371,8 +379,10 @@ TEST(kernel_exp_family_impl_Nystrom, hessian_all_inds_equals_exact)
 	for (auto i=0; i<D; i++)
 		x[i]=CMath::randn_float();
 
-	auto hessian = est.hessian(x);
-	auto hessian_nystrom = est_nystrom.hessian(x);
+	est.set_test_data(x);
+	est_nystrom.set_test_data(x);
+	auto hessian = est.hessian(0);
+	auto hessian_nystrom = est_nystrom.hessian(0);
 	
 	for (auto i=0; i<D*D; i++)
 		EXPECT_NEAR(hessian.matrix[i], hessian_nystrom.matrix[i], 1e-8);
@@ -398,8 +408,10 @@ TEST(kernel_exp_family_impl_Nystrom, hessian_almost_all_inds_execute)
 	for (auto i=0; i<D; i++)
 		x[i]=CMath::randn_float();
 
-	auto hessian = est.hessian(x);
-	auto hessian_nystrom = est_nystrom.hessian(x);
+	est.set_test_data(x);
+	est_nystrom.set_test_data(x);
+	auto hessian = est.hessian(0);
+	auto hessian_nystrom = est_nystrom.hessian(0);
 }
 
 TEST(kernel_exp_family_impl_Nystrom, hessian_diag_equals_hessian)
@@ -420,8 +432,10 @@ TEST(kernel_exp_family_impl_Nystrom, hessian_diag_equals_hessian)
 	SGVector<float64_t> x(D);
 	x[0] = CMath::randn_float();
 	x[1] = CMath::randn_float();
-	auto hessian = est.hessian(x);
-	auto hessian_diag = est.hessian_diag(x);
+	
+	est.set_test_data(x);
+	auto hessian = est.hessian(0);
+	auto hessian_diag = est.hessian_diag(0);
 	
 	for (auto i=0; i<D; i++)
 		EXPECT_NEAR(hessian_diag[i], hessian(i,i), 1e-8);

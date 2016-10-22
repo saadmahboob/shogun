@@ -195,7 +195,8 @@ TEST(kernel_exp_family_impl_Full, log_pdf_kernel_Gaussian)
 	SGVector<float64_t> x(D);
 	x[0] = 0;
 	x[1] = 1;
-	auto log_pdf = est.log_pdf(x);
+	est.set_test_data(x);
+	auto log_pdf = est.log_pdf(0);
 
 	// from kernel_exp_family Python implementation
 	EXPECT_NEAR(log_pdf, 0.6612075586873365, 1e-15);
@@ -222,7 +223,8 @@ TEST(kernel_exp_family_impl_Full, grad_kernel_Gaussian)
 	SGVector<float64_t> x(D);
 	x[0] = 0;
 	x[1] = 1;
-	auto grad = est.grad(x);
+	est.set_test_data(x);
+	auto grad = est.grad(0);
 
 	// from kernel_exp_family Python implementation
 	float64_t reference[] = {-0.01120102, -0.01680534};
@@ -231,7 +233,8 @@ TEST(kernel_exp_family_impl_Full, grad_kernel_Gaussian)
 	
 	x[0] = 1;
 	x[1] = 1;
-	grad = est.grad(x);
+	est.set_test_data(x);
+	grad = est.grad(0);
 	float64_t reference2[] = {-0.61982803, -0.04194253};
 	for (auto i=0; i<D; i++)
 		EXPECT_NEAR(grad[i], reference2[i], 1e-8);
@@ -258,7 +261,8 @@ TEST(kernel_exp_family_impl_Full, hessian_kernel_Gaussian)
 	SGVector<float64_t> x(D);
 	x[0] = 1;
 	x[1] = 1;
-	auto hessian = est.hessian(x);
+	est.set_test_data(x);
+	auto hessian = est.hessian(0);
 	
 	float64_t reference[] = {0.20518773, -0.01275602,
 							-0.01275602, -0.33620648};
@@ -267,8 +271,8 @@ TEST(kernel_exp_family_impl_Full, hessian_kernel_Gaussian)
 
 	x[0] = -1;
 	x[1] = 0;
-
-	hessian = est.hessian(x);
+	est.set_test_data(x);
+	hessian = est.hessian(0);
 
 	float64_t reference2[] = {0.12205638, 0.24511196,
 							  0.24511196, 0.12173557};
@@ -298,7 +302,8 @@ TEST(kernel_exp_family_impl_Full, hessian_diag_kernel_Gaussian)
 	SGVector<float64_t> x(D);
 	x[0] = 0;
 	x[1] = 1;
-	auto hessian_diag = est.hessian_diag(x);
+	est.set_test_data(x);
+	auto hessian_diag = est.hessian_diag(0);
 	
 	// from kernel_exp_family Python implementation
 	float64_t reference[] = {-1.34262346, -1.3600992 };
@@ -325,8 +330,9 @@ TEST(kernel_exp_family_impl_Full, hessian_diag_equals_hessian)
 	SGVector<float64_t> x(D);
 	x[0] = CMath::randn_float();
 	x[1] = CMath::randn_float();
-	auto hessian = est.hessian(x);
-	auto hessian_diag = est.hessian_diag(x);
+	est.set_test_data(x);
+	auto hessian = est.hessian(0);
+	auto hessian_diag = est.hessian_diag(0);
 	
 	for (auto i=0; i<D; i++)
 		EXPECT_NEAR(hessian_diag[i], hessian(i,i), 1e-8);

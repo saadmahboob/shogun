@@ -59,18 +59,13 @@ public :
 	// for evaluation
 	void set_test_data(SGMatrix<float64_t> X);
 	void set_test_data(SGVector<float64_t> x);
+	void reset_test_data();
+	bool is_test_equals_train_data() const;
 
 	void fit();
 
+
 	float64_t objective() const;
-	float64_t objective(SGMatrix<float64_t> X);
-
-	float64_t log_pdf(SGVector<float64_t> x);
-	SGVector<float64_t> log_pdf(SGMatrix<float64_t> X);
-
-	SGVector<float64_t> grad(SGVector<float64_t> x);
-	SGMatrix<float64_t> hessian(SGVector<float64_t> x);
-	SGVector<float64_t> hessian_diag(SGVector<float64_t> x);
 
 	SGVector<float64_t> get_alpha_beta() const { return m_alpha_beta; }
 
@@ -83,6 +78,10 @@ public :
 	virtual SGVector<float64_t> grad(index_t idx_test) const=0;
 	virtual SGMatrix<float64_t> hessian(index_t idx_test) const=0;
 	virtual SGVector<float64_t> hessian_diag(index_t idx_test) const=0;
+	virtual SGVector<float64_t> leverage() const=0;
+
+	virtual SGVector<float64_t> log_pdf() const;
+	virtual SGMatrix<float64_t> grad() const;
 
 protected:
 	const SGVector<float64_t> get_lhs_point(index_t i) const;

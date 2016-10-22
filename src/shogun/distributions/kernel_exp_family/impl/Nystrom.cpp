@@ -37,6 +37,9 @@
 #include "kernel/Base.h"
 #include "Nystrom.h"
 
+// TODO remove this, code should be shared via base class instead
+#include "Full.h"
+
 using namespace shogun;
 using namespace shogun::kernel_exp_family_impl;
 using namespace Eigen;
@@ -404,4 +407,10 @@ SGVector<float64_t> Nystrom::hessian_diag(index_t idx_test) const
 	eigen_xi_hessian_diag += eigen_beta_sum_hessian_diag;
 
 	return xi_hessian_diag;
+}
+
+SGVector<float64_t> Nystrom::leverage() const
+{
+	SG_SERROR("Not implemented yet.\n");
+	return SGVector<float64_t>();
 }

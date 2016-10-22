@@ -69,6 +69,7 @@ public :
 	virtual SGVector<float64_t> grad(index_t idx_test) const;
 	virtual SGMatrix<float64_t> hessian(index_t idx_test) const;
 	virtual SGVector<float64_t> hessian_diag(index_t idx_test) const;
+	virtual SGVector<float64_t> leverage() const;
 
 	// define wrappers for convenience functions in base class
 	using Base::log_pdf;
