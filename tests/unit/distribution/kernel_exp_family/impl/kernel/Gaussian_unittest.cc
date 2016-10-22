@@ -30,15 +30,43 @@
 
 #include <shogun/features/DenseFeatures.h>
 #include <shogun/distributions/kernel_exp_family/impl/kernel/Gaussian.h>
+#include <shogun/distributions/kernel_exp_family/impl/Nystrom.h>
+
 #include <shogun/kernel/GaussianKernel.h>
 #include <shogun/mathematics/Math.h>
 #include <shogun/base/some.h>
 #include <gtest/gtest.h>
 #include <memory>
 
+
 using namespace std;
 using namespace shogun;
 using namespace shogun::kernel_exp_family_impl::kernel;
+
+// TODO use functions to generate test data everywhere
+// TODO write functions for common use cases (instances of full vs nystrom)
+
+SGMatrix<float64_t> gen_rand_toy_data(index_t N, index_t D)
+{
+	SGMatrix<float64_t> X(D,N);
+	for (auto i=0; i<N*D; i++)
+		X.matrix[i]=CMath::randn_float();
+	return  X;
+}
+
+SGMatrix<float64_t> gen_fix_toy_data_N_3_D_2()
+{
+	auto D=2;
+	auto N=3;
+	SGMatrix<float64_t> X(D,N);
+	X(0,0)=0;
+	X(1,0)=2;
+	X(0,1)=4;
+	X(1,1)=8;
+	X(0,2)=3;
+	X(1,2)=6;
+	return X;
+}
 
 TEST(kernel_exp_family_impl_kernel_Gaussian, kernel_equals_manual)
 {
@@ -742,4 +770,3 @@ TEST(kernel_exp_family_impl_kernel_Gaussian, dx_i_dx_j_dx_k_dot_vec_component)
 		}
 	}
 }
-

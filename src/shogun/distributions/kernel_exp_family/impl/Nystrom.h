@@ -38,7 +38,6 @@
 
 #include "Base.h"
 
-
 namespace shogun
 {
 
@@ -54,8 +53,6 @@ public :
 
 	virtual ~Nystrom() {};
 
-	void sub_sample_rkhs_basis(index_t num_rkhs_basis);
-
 	// overloaded
 	float64_t compute_xi_norm_2() const;
 	SGVector<float64_t> compute_h() const;
@@ -69,6 +66,7 @@ public :
 	virtual SGVector<float64_t> grad(index_t idx_test) const;
 	virtual SGMatrix<float64_t> hessian(index_t idx_test) const;
 	virtual SGVector<float64_t> hessian_diag(index_t idx_test) const;
+	virtual SGVector<float64_t> leverage() const;
 
 	// define wrappers for convenience functions in base class
 	using Base::log_pdf;
@@ -80,8 +78,9 @@ public :
 
 protected:
 	index_t get_num_rkhs_basis() const;
+	SGVector<index_t> sub_sample_rkhs_basis(index_t num_rkhs_basis) const;
+	void init_rkhs_basis(const SGVector<float64_t>& rkhs_basis_inds);
 
-protected:
 	SGVector<index_t> m_rkhs_basis_inds;
 };
 };

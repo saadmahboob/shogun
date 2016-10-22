@@ -63,6 +63,26 @@ void Base::set_test_data(SGVector<float64_t> x)
 	set_test_data(SGMatrix<float64_t>(x));
 }
 
+void Base::reset_test_data()
+{
+	set_test_data(m_lhs);
+}
+
+bool Base::is_test_equals_train_data() const
+{
+	// check for same memory and same dimensions
+	if (m_lhs.matrix != m_rhs.matrix)
+		return false;
+
+	if (m_lhs.num_rows != m_rhs.num_rows)
+		return false;
+
+	if (m_lhs.num_cols != m_rhs.num_cols)
+		return false;
+
+	return true;
+}
+
 index_t Base::get_num_rhs() const
 {
 	return m_rhs.num_cols;
@@ -129,12 +149,6 @@ float64_t Base::objective() const
 	return objective / N;
 }
 
-float64_t Base::objective(SGMatrix<float64_t> X)
-{
-	set_test_data(X);
-	return objective();
-}
-
 void Base::solve_and_store(const SGMatrix<float64_t>& A, const SGVector<float64_t>& b)
 {
 	auto eigen_A = Map<MatrixXd>(A.matrix, A.num_rows, A.num_cols);
@@ -143,13 +157,28 @@ void Base::solve_and_store(const SGMatrix<float64_t>& A, const SGVector<float64_
 	m_alpha_beta = SGVector<float64_t>(b.vlen);
 	auto eigen_alpha_beta = Map<VectorXd>(m_alpha_beta.vector, m_alpha_beta.vlen);
 
-	SG_SINFO("Computing LDLT Cholesky.\n");
-	eigen_alpha_beta = eigen_A.ldlt().solve(eigen_b);
+//	SG_SINFO("Solving with LDLT.\n");
+//	auto solver = LDLT<MatrixXd>();
+//	solver.compute(eigen_A);
+//
+//	if (!solver.info() == Eigen::Success)
+//		SG_SWARNING("Numerical problems computing LDLT.\n");
+//
+//	eigen_alpha_beta = solver.solve(eigen_b);
+
+	// SVD seems better behaved, but it is way slower
+	SG_SINFO("Solving with SVD.\n");
+	JacobiSVD<MatrixXd> solver(eigen_A, Eigen::ComputeThinU | Eigen::ComputeThinV);
+	eigen_alpha_beta = solver.solve(eigen_b);
+
+	auto s = solver.singularValues().array().pow(2);
+	SG_SINFO("Eigenspectrum range is [%f, %f], or [exp(%f), exp(%f)].\n",
+			s.array().minCoeff(), s.array().maxCoeff(),
+			CMath::log(s.array().minCoeff()), CMath::log(s.array().maxCoeff()));
 }
 
-SGVector<float64_t> Base::log_pdf(const SGMatrix<float64_t> X)
+SGVector<float64_t> Base::log_pdf() const
 {
-	set_test_data(X);
 	auto N_test = get_num_rhs();
 	SGVector<float64_t> result(N_test);
 #pragma omp parallel for
@@ -159,26 +188,18 @@ SGVector<float64_t> Base::log_pdf(const SGMatrix<float64_t> X)
 	return result;
 }
 
-float64_t Base::log_pdf(SGVector<float64_t> x)
+SGMatrix<float64_t> Base::grad() const
 {
-	set_test_data(x);
-	return ((const Base*)this)->log_pdf(0);
-}
+	auto N_test = get_num_rhs();
+	auto D = get_num_dimensions();
 
-SGVector<float64_t> Base::grad(SGVector<float64_t> x)
-{
-	set_test_data(x);
-	return ((const Base*)this)->grad(0);
-}
+	SGMatrix<float64_t> result(D, N_test);
+#pragma omp parallel for
+	for (auto i=0; i<N_test; ++i)
+	{
+		auto grad = ((const Base*)this)->grad(i);
+		memcpy(grad.vector, result.get_column_vector(i), D*sizeof(float64_t));
+	}
 
-SGMatrix<float64_t> Base::hessian(SGVector<float64_t> x)
-{
-	set_test_data(x);
-	return ((const Base*)this)->hessian(0);
-}
-
-SGVector<float64_t> Base::hessian_diag(SGVector<float64_t> x)
-{
-	set_test_data(x);
-	return ((const Base*)this)->hessian_diag(0);
+	return result;
 }

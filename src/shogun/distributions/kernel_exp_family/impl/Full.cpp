@@ -159,6 +159,7 @@ float64_t Full::log_pdf(index_t idx_test) const
 
 SGVector<float64_t> Full::grad(index_t idx_test) const
 {
+	// TODO this produces junk for 1D case
 	auto D = get_num_dimensions();
 	auto N = get_num_lhs();
 
@@ -266,4 +267,49 @@ SGVector<float64_t> Full::hessian_diag(index_t idx_test) const
 	eigen_xi_hessian_diag += eigen_beta_sum_hessian_diag;
 
 	return xi_hessian_diag;
+}
+
+SGVector<float64_t> Full::leverage() const
+{
+	auto ND = get_num_lhs()*get_num_dimensions();
+
+	auto leverage = SGVector<float64_t>(ND);
+
+	SG_SINFO("Computing exact leverage scores using SVD.\n");
+
+	auto A = Map<MatrixXd>(build_system().first.matrix, ND+1, ND+1);
+
+//	SelfAdjointEigenSolver<MatrixXd> solver(A);
+//	auto s = solver.eigenvalues();
+//	auto U = solver.eigenvectors();
+//
+//	switch (solver.info())
+//	{
+//	case NumericalIssue:
+//		SG_SWARNING("Numerical problems computing Eigendecomposition.\n");
+//		break;
+//	case NoConvergence:
+//		SG_SWARNING("No convergence computing Eigendecomposition.\n");
+//		break;
+//	default:
+//		break;
+//	}
+
+	// using SVD here since eigen3's self-adjoint eigenvalue produces negatives
+	JacobiSVD<MatrixXd> solver(A.block(1,1,ND,ND), Eigen::ComputeThinU);
+	auto s = solver.singularValues().array().pow(2);
+	auto U = solver.matrixU();
+
+	SG_SINFO("Eigenspectrum range is [%f, %f], or [exp(%f), exp(%f)].\n",
+			s.array().minCoeff(), s.array().maxCoeff(),
+			CMath::log(s.array().minCoeff()), CMath::log(s.array().maxCoeff()));
+
+	for (auto i=0; i<ND; i++)
+	{
+		leverage[i]=0;
+		for (auto j=0; j<ND; j++)
+			leverage[i] += s[j] / (s[j]+ND*m_lambda)*pow(U(i,j), 2);
+	}
+
+	return leverage;
 }

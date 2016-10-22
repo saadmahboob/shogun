@@ -37,6 +37,9 @@
 #include "kernel/Base.h"
 #include "Nystrom.h"
 
+// TODO remove this, code should be shared via base class instead
+#include "Full.h"
+
 using namespace shogun;
 using namespace shogun::kernel_exp_family_impl;
 using namespace Eigen;
@@ -55,24 +58,7 @@ Nystrom::Nystrom(SGMatrix<float64_t> data,
 		kernel::Base* kernel, float64_t lambda,
 		index_t num_rkhs_basis)  : Base(data, kernel, lambda)
 {
-	sub_sample_rkhs_basis(num_rkhs_basis);
-}
-
-void Nystrom::sub_sample_rkhs_basis(index_t num_rkhs_basis)
-{
-	SG_SINFO("Using m=%d uniformly sampled RKHS basis function.\n", num_rkhs_basis);
-	auto N = get_num_lhs();
-	auto D = get_num_dimensions();
-
-	SGVector<index_t> permutation(N*D);
-	permutation.range_fill();
-	CMath::permute(permutation);
-	m_rkhs_basis_inds = SGVector<index_t>(num_rkhs_basis);
-	for (auto i=0; i<num_rkhs_basis; i++)
-		m_rkhs_basis_inds[i]=permutation[i];
-
-	// in order to have more sequential data reads
-	CMath::qsort(m_rkhs_basis_inds.vector, num_rkhs_basis);
+	m_rkhs_basis_inds = sub_sample_rkhs_basis(num_rkhs_basis);
 }
 
 index_t Nystrom::get_num_rkhs_basis() const
@@ -99,14 +85,12 @@ float64_t Nystrom::compute_xi_norm_2() const
 	float64_t xi_norm_2=0;
 
 #pragma omp parallel for reduction (+:xi_norm_2)
-	for (auto idx_a=0; idx_a<N; idx_a++)
-		for (auto i=0; i<D; i++)
-			for (auto col_idx=0; col_idx<m; col_idx++)
+	for (auto idx=0; idx<m; idx++)
+		for (auto idx_b=0; idx_b<N; idx_b++)
+			for (auto j=0; j<D; j++)
 			{
-				auto bj = idx_to_ai(m_rkhs_basis_inds[col_idx]);
-				auto idx_b = bj.first;
-				auto j = bj.second;
-				xi_norm_2 += m_kernel->dx_dx_dy_dy_component(idx_a, idx_b, i, j);
+				auto ai = idx_to_ai(m_rkhs_basis_inds[idx]);
+				xi_norm_2 += m_kernel->dx_dx_dy_dy_component(ai.first, idx_b, ai.second, j);
 			}
 
 	// TODO check math as the number of terms is different here
@@ -144,24 +128,20 @@ std::pair<SGMatrix<float64_t>, SGVector<float64_t>> Nystrom::build_system() cons
 	auto eigen_sub_sampled_hessian = Map<MatrixXd>(sub_sampled_hessian.matrix, m, m);
 
 #pragma omp parallel for
-	for (auto col_idx=0; col_idx<m; col_idx++)
+	for (auto idx=0; idx<m; idx++)
 	{
-		auto bj = idx_to_ai(m_rkhs_basis_inds[col_idx]);
-		auto idx_b = bj.first;
-		auto j = bj.second;
+		auto ai = idx_to_ai(m_rkhs_basis_inds[idx]);
 
-		// TODO compute the whole column of all kernel hessians at once
+		// TODO vectorise: compute the whole column of all kernel hessians at once
 		for (auto row_idx=0; row_idx<ND; row_idx++)
 		{
-			auto ai = idx_to_ai(row_idx);
-			auto idx_a = ai.first;
-			auto i = ai.second;
-			col_sub_sampled_hessian(row_idx, col_idx)=
-					m_kernel->dx_dy_component(idx_a, idx_b, i, j);
+			auto bj = idx_to_ai(row_idx);
+			col_sub_sampled_hessian(row_idx, idx)=
+					m_kernel->dx_dy_component(ai.first, bj.first, ai.second, bj.second);
 		}
 
 		for (auto row_idx=0; row_idx<m; row_idx++)
-			sub_sampled_hessian(row_idx,col_idx)=col_sub_sampled_hessian(m_rkhs_basis_inds[row_idx], col_idx);
+			sub_sampled_hessian(row_idx,idx)=col_sub_sampled_hessian(m_rkhs_basis_inds[row_idx], idx);
 	}
 
 	SG_SINFO("Populating A matrix.\n");
@@ -171,8 +151,8 @@ std::pair<SGMatrix<float64_t>, SGVector<float64_t>> Nystrom::build_system() cons
 	eigen_A.block(1,1,m,m).noalias()=eigen_col_sub_sampled_hessian.transpose()*eigen_col_sub_sampled_hessian / N + m_lambda*eigen_sub_sampled_hessian;
 	eigen_A.col(0).segment(1, m).noalias() = eigen_sub_sampled_hessian*eigen_h / N + m_lambda*eigen_h;
 
-	for (auto ind_idx=0; ind_idx<m; ind_idx++)
-		A(0, ind_idx+1) = A(ind_idx+1, 0);
+	for (auto idx=0; idx<m; idx++)
+		A(0, idx+1) = A(idx+1, 0);
 
 	b[0] = -xi_norm_2;
 	eigen_b.segment(1, m) = -eigen_h;
@@ -191,16 +171,15 @@ SGVector<float64_t> Nystrom::compute_h() const
 	eigen_h = VectorXd::Zero(m);
 
 #pragma omp parallel for
-	for (auto rkhs_idx=0; rkhs_idx<m; rkhs_idx++)
+	for (auto idx=0; idx<m; idx++)
 	{
-		auto bj = idx_to_ai(m_rkhs_basis_inds[rkhs_idx]);
-		auto idx_b = bj.first;
-		auto j = bj.second;
+		auto bj = idx_to_ai(m_rkhs_basis_inds[idx]);
 
 		// TODO compute sum in single go
+		// TODO put Nystrom basis as LHS
 		for (auto idx_a=0; idx_a<N; idx_a++)
 			for (auto i=0; i<D; i++)
-				h[rkhs_idx] += m_kernel->dx_dx_dy_component(idx_a, idx_b, i, j);
+				h[idx] += m_kernel->dx_dx_dy_component(idx_a, bj.first, i, bj.second);
 	}
 
 	eigen_h /= N;
@@ -217,18 +196,16 @@ float64_t Nystrom::log_pdf(index_t idx_test) const
 	float64_t xi = 0;
 	float64_t beta_sum = 0;
 
-	for (auto ind_idx=0; ind_idx<m; ind_idx++)
+	for (auto idx=0; idx<m; idx++)
 	{
-		auto ai = idx_to_ai(m_rkhs_basis_inds[ind_idx]);
-		auto a = ai.first;
-		auto i = ai.second;
+		auto ai = idx_to_ai(m_rkhs_basis_inds[idx]);
 
-		auto xi_grad_i = m_kernel->dx_dx_component(a, idx_test, i);
-		auto grad_x_xa_i = m_kernel->dx_component(a, idx_test, i);
+		auto xi_grad_i = m_kernel->dx_dx_component(ai.first, idx_test, ai.second);
+		auto grad_x_xa_i = m_kernel->dx_component(ai.first, idx_test, ai.second);
 
 		xi += xi_grad_i;
 		// note: sign flip due to swapped kernel arugment compared to Python code
-		beta_sum -= grad_x_xa_i * m_alpha_beta[1+ind_idx];
+		beta_sum -= grad_x_xa_i * m_alpha_beta[1+idx];
 	}
 
 	return m_alpha_beta[0]*xi/N + beta_sum;
@@ -247,20 +224,18 @@ SGVector<float64_t> Nystrom::grad(index_t idx_test) const
 	eigen_xi_grad = VectorXd::Zero(D);
 	eigen_beta_sum_grad.array() = VectorXd::Zero(D);
 
-	for (auto ind_idx=0; ind_idx<m; ind_idx++)
+	for (auto idx=0; idx<m; idx++)
 	{
-		auto ai = idx_to_ai(m_rkhs_basis_inds[ind_idx]);
-		auto a = ai.first;
-		auto i = ai.second;
+		auto ai = idx_to_ai(m_rkhs_basis_inds[idx]);
 
-		auto xi_gradient_mat_component = m_kernel->dx_i_dx_i_dx_j_component(a, idx_test, i);
+		auto xi_gradient_mat_component = m_kernel->dx_i_dx_i_dx_j_component(ai.first, idx_test, ai.second);
 		Map<VectorXd> eigen_xi_gradient_mat_component(xi_gradient_mat_component.vector, D);
-		auto left_arg_hessian_component = m_kernel->dx_i_dx_j_component(a, idx_test, i);
+		auto left_arg_hessian_component = m_kernel->dx_i_dx_j_component(ai.first, idx_test, ai.second);
 		Map<VectorXd> eigen_left_arg_hessian_component(left_arg_hessian_component.vector, D);
 
 		// note: sign flip due to swapped kernel argument compared to Python code
 		eigen_xi_grad -= eigen_xi_gradient_mat_component;
-		eigen_beta_sum_grad += eigen_left_arg_hessian_component * m_alpha_beta[1+ind_idx];
+		eigen_beta_sum_grad += eigen_left_arg_hessian_component * m_alpha_beta[1+idx];
 	}
 
 	// re-use memory
@@ -324,12 +299,10 @@ SGMatrix<float64_t> Nystrom::hessian(index_t idx_test) const
 	// dimension as in full version
 	// TODO can be improved
 	VectorXd beta_full_fake=VectorXd::Zero(N*D);
-	for (auto ind_idx=0; ind_idx<m; ind_idx++)
+	for (auto idx=0; idx<m; idx++)
 	{
-		auto ai = idx_to_ai(m_rkhs_basis_inds[ind_idx]);
-		auto a = ai.first;
-		auto i = ai.second;
-		beta_full_fake[a*D+i] = m_alpha_beta[1+ind_idx];
+		auto ai = idx_to_ai(m_rkhs_basis_inds[idx]);
+		beta_full_fake[ai.first*D+ai.second] = m_alpha_beta[1+idx];
 	}
 
 	// TODO currently iterates over all data points
@@ -337,17 +310,18 @@ SGMatrix<float64_t> Nystrom::hessian(index_t idx_test) const
 	// However can be done better via only touching the data in the Nystrom basis
 	// and for every data check which are the corresponding dimensions that contribute
 	// happens implicit here as some parts of the beta vector are zero
-	for (auto a=0; a<N; a++)
+	// better to iterate over LHS, ie the Nystrom basis explicitly
+	for (auto idx_a=0; idx_a<N; idx_a++)
 	{
-		auto xi_hess_sum = m_kernel->dx_i_dx_j_dx_k_dx_k_row_sum(a, idx_test);
+		auto xi_hess_sum = m_kernel->dx_i_dx_j_dx_k_dx_k_row_sum(idx_a, idx_test);
 
 		Map<MatrixXd> eigen_xi_hess_sum(xi_hess_sum.matrix, D, D);
 		eigen_xi_hessian += eigen_xi_hess_sum;
 
-		SGVector<float64_t> beta_a(beta_full_fake.segment(a*D, D).data(), D, false);
+		SGVector<float64_t> beta_a(beta_full_fake.segment(idx_a*D, D).data(), D, false);
 
 		// Note sign flip because arguments are opposite order of Python code
-		auto beta_hess_sum = m_kernel->dx_i_dx_j_dx_k_dot_vec(a, idx_test, beta_a);
+		auto beta_hess_sum = m_kernel->dx_i_dx_j_dx_k_dot_vec(idx_a, idx_test, beta_a);
 		Map<MatrixXd> eigen_beta_hess_sum(beta_hess_sum.matrix, D, D);
 		eigen_beta_sum_hessian -= eigen_beta_hess_sum;
 	}
@@ -380,23 +354,21 @@ SGVector<float64_t> Nystrom::hessian_diag(index_t idx_test) const
 
 	// TODO can be improved (see full hessian case)
 	VectorXd beta_full_fake=VectorXd::Zero(N*D);
-	for (auto ind_idx=0; ind_idx<m; ind_idx++)
+	for (auto idx=0; idx<m; idx++)
 	{
-		auto ai = idx_to_ai(m_rkhs_basis_inds[ind_idx]);
-		auto a = ai.first;
-		auto i = ai.second;
-		beta_full_fake[a*D+i] = m_alpha_beta[1+ind_idx];
+		auto ai = idx_to_ai(m_rkhs_basis_inds[idx]);
+		beta_full_fake[ai.first*D+ai.second] = m_alpha_beta[1+idx];
 	}
 
 	// TODO currently iterates over all data points (see full hessian case)
 	SGVector<float64_t> xi_hess_sum_diag = SGVector<float64_t>(D);
-	for (auto a=0; a<N; a++)
+	for (auto idx_a=0; idx_a<N; idx_a++)
 	{
-		SGVector<float64_t> beta_a(beta_full_fake.segment(a*D, D).data(), D, false);
+		SGVector<float64_t> beta_a(beta_full_fake.segment(idx_a*D, D).data(), D, false);
 		for (auto i=0; i<D; i++)
 		{
-			eigen_xi_hessian_diag[i] += m_kernel->dx_i_dx_j_dx_k_dx_k_row_sum_component(a, idx_test, i, i);
-			eigen_beta_sum_hessian_diag[i] -= m_kernel->dx_i_dx_j_dx_k_dot_vec_component(a, idx_test, beta_a, i, i);
+			eigen_xi_hessian_diag[i] += m_kernel->dx_i_dx_j_dx_k_dx_k_row_sum_component(idx_a, idx_test, i, i);
+			eigen_beta_sum_hessian_diag[i] -= m_kernel->dx_i_dx_j_dx_k_dot_vec_component(idx_a, idx_test, beta_a, i, i);
 		}
 	}
 
@@ -405,3 +377,32 @@ SGVector<float64_t> Nystrom::hessian_diag(index_t idx_test) const
 
 	return xi_hessian_diag;
 }
+
+SGVector<float64_t> Nystrom::leverage() const
+{
+	SG_SERROR("Not implemented yet.\n");
+	return SGVector<float64_t>();
+}
+
+
+// new nystrom implementation
+
+SGVector<index_t> Nystrom::sub_sample_rkhs_basis(index_t num_rkhs_basis) const
+{
+	SG_SINFO("Using m=%d uniformly sampled RKHS basis functions.\n", num_rkhs_basis);
+	auto N = get_num_lhs();
+	auto D = get_num_dimensions();
+
+	SGVector<index_t> permutation(N*D);
+	permutation.range_fill();
+	CMath::permute(permutation);
+	auto rkhs_basis_inds = SGVector<index_t>(num_rkhs_basis);
+	for (auto i=0; i<num_rkhs_basis; i++)
+		rkhs_basis_inds[i]=permutation[i];
+
+	// in order to have more sequential data reads
+	CMath::qsort(rkhs_basis_inds.vector, num_rkhs_basis);
+
+	return rkhs_basis_inds;
+}
+

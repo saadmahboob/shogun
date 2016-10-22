@@ -52,13 +52,24 @@ public:
 	virtual ~CKernelExpFamily();
 
 	virtual void fit();
-	virtual float64_t log_pdf(SGVector<float64_t> x);
-	virtual SGVector<float64_t> log_pdf_multiple(SGMatrix<float64_t> X);
-	virtual SGVector<float64_t> grad(SGVector<float64_t> x);
-	virtual SGMatrix<float64_t> hessian(SGVector<float64_t> x);
-	virtual float64_t objective();
-	virtual float64_t objective(SGMatrix<float64_t> X);
+	virtual float64_t log_pdf(index_t i=0);
+	virtual SGVector<float64_t> grad(index_t i=0);
+	virtual SGMatrix<float64_t> hessian(index_t i=0);
 
+	virtual SGVector<float64_t> log_pdf_multiple();
+	virtual SGMatrix<float64_t> grad_multiple();
+
+	virtual float64_t objective();
+	virtual SGVector<float64_t> leverage();
+
+	virtual void set_test_data(SGMatrix<float64_t> X);
+	virtual void set_test_data(SGVector<float64_t> x);
+
+	virtual void reset_test_data();
+
+	// for development purposes
+	virtual SGMatrix<float64_t> get_matrix(const char* name="");
+	virtual SGVector<float64_t> get_vector(const char* name="");
 
 	virtual const char* get_name() const { return "KernelExpFamily"; }
 
