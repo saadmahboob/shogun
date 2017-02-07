@@ -1,3 +1,14 @@
+# Meta dependencies
+FIND_PACKAGE(PLY REQUIRED)
+IF(NOT PLY_FOUND)
+    message(FATAL_ERROR "Python module ply required for meta examples. Disable meta examples or install python-ply")
+ENDIF()
+
+FIND_PACKAGE(Ctags)
+IF(NOT CTAGS_FOUND)
+    message(FATAL_ERROR "Ctags required for meta examples.")
+ENDIF()
+
 # get list of meta examples that can be built
 INCLUDE(FindMetaExamples)
 find_meta_examples()

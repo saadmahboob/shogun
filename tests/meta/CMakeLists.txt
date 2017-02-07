@@ -17,8 +17,8 @@ ENDIF()
 
 # compile tester c++ binary
 ADD_EXECUTABLE(meta_example_integration_tester ${CMAKE_CURRENT_SOURCE_DIR}/tester.cpp)
-ADD_DEPENDENCIES(meta_example_integration_tester shogun)
-TARGET_LINK_LIBRARIES(meta_example_integration_tester shogun ${SANITIZER_LIBRARY})
+ADD_DEPENDENCIES(meta_example_integration_tester shogun::shogun)
+TARGET_LINK_LIBRARIES(meta_example_integration_tester shogun::shogun ${SANITIZER_LIBRARY})
 IF(SANITIZER_FLAGS)
     SET_TARGET_PROPERTIES(meta_example_integration_tester PROPERTIES COMPILE_FLAGS ${SANITIZER_FLAGS})
 ENDIF()
@@ -63,7 +63,7 @@ FOREACH(REFERENCE_FILE ${META_INTEGRATION_REFERENCES})
 	            #AddMetaIntegrationTest(r RModular) # currently we have the r meta examples disabled, so no generated results that can be tested
 	            AddMetaIntegrationTest(octave OctaveModular)
 	            AddMetaIntegrationTest(csharp CSharpModular)
-	            AddMetaIntegrationTest(ruby RobyModular)
+	            AddMetaIntegrationTest(ruby RubyModular)
 	            #AddMetaIntegrationTest(lua LuaModular) # currently doesn't have meta examples
 	        ENDIF()
 		ELSE()
